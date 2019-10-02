@@ -1,25 +1,18 @@
 # Copyright 2016-2017 Compassion CH (http://www.compassion.ch)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-from odoo import models, fields, api, tools
-from odoo.tools.config import config
-from odoo.tools.safe_eval import safe_eval
-
-from sendgrid.helpers.mail import (
-    Mail, From, To, Cc, Bcc, Subject, Substitution, Header,
-    CustomArg, SendAt, Content, MimeType, Attachment, FileName,
-    FileContent, FileType, Disposition, ContentId, TemplateId,
-    Section, ReplyTo, Category, BatchId, Asm, GroupId, GroupsToDisplay,
-    IpPoolName, MailSettings, BccSettings, BccSettingsEmail,
-    BypassListManagement, FooterSettings, FooterText,
-    FooterHtml, SandBoxMode, SpamCheck, SpamThreshold, SpamUrl,
-    TrackingSettings, ClickTracking, SubscriptionTracking,
-    SubscriptionText, SubscriptionHtml, SubscriptionSubstitutionTag,
-    OpenTracking, OpenTrackingSubstitutionTag, Ganalytics,
-    UtmSource, UtmMedium, UtmTerm, UtmContent, UtmCampaign)
-
 import logging
 import re
 import time
+
+from sendgrid.helpers.mail import (
+    From, To, Cc, Subject, MimeType, FileName,
+    FileContent, FileType, Disposition, TemplateId,
+    ReplyTo)
+
+from odoo import models, fields, api, tools
+from odoo.tools import config
+
+from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
 
@@ -116,8 +109,8 @@ class MailMail(models.Model):
                     'sent_date': fields.Datetime.now(),
                     'state': 'sent'
                 })
-                if not self.env.context.get('test_mode'):
-                    # Commit at each e-mail processed to avoid any errors
+                if not config['test_enable']:
+                            # Commit at each e-mail processed to avoid any errors
                     # invalidating state.
                     self.env.cr.commit()  # pylint: disable=invalid-commit
 
@@ -149,7 +142,7 @@ class MailMail(models.Model):
                 headers.update(safe_eval(self.headers))
             except Exception:
                 pass
-        for h_name, h_val in headers.items():
+        for h_name, h_val in list(headers.items()):
             s_mail.header = Header(h_name, h_val)
 
         html = self.body_html or ' '

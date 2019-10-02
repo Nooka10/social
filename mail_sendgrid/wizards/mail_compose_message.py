@@ -34,7 +34,7 @@ class EmailComposeMessage(models.TransientModel):
         if sendgrid_template_id:
             substitutions = template.render_substitutions(res_ids)
 
-            for res_id, value in mail_values.items():
+            for res_id, value in list(mail_values.items()):
                 value['sendgrid_template_id'] = sendgrid_template_id
                 value['substitution_ids'] = substitutions[res_id]
 

@@ -39,7 +39,6 @@ class SendgridTemplate(models.Model):
 
     @api.model
     def update_templates(self):
-        global template_vals
         api_key = config.get('sendgrid_api_key')
         if not api_key:
             raise exceptions.UserError(
@@ -109,13 +108,7 @@ class SendgridTemplate(models.Model):
             pattern = '(' + prefix + '(\w{1,50})' + suffix + ')|({{3}(\w{1,50})}{3})'
             # return list(set(re.finditer(pattern, self.html_content)))
             w = set(
-                filter(
-                    lambda x: x != 'body',
-                    map(
-                        lambda x: x.group(2) or x.group(4),
-                        re.finditer(pattern, self.html_content)
-                    )
-                )
+                [x for x in [x.group(2) or x.group(4) for x in re.finditer(pattern, self.html_content)] if x != 'body']
             )
 
             return w

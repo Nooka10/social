@@ -46,12 +46,13 @@ class SendgridTemplate(models.Model):
 
         sg = sendgrid.SendGridAPIClient(api_key)
         template_client = sg.client.templates
-        msg = template_client.get(query_params={'generations': 'legacy,dynamic'}).body
+        msg = template_client.get(
+            query_params={'generations': 'legacy,dynamic'}).body
         result = json.loads(msg)
 
         for template in result.get("templates", list()):
-            id = template["id"]
-            msg = template_client._(id).get().body
+            template_id = template["id"]
+            msg = template_client._(template_id).get().body
             template_versions = json.loads(msg)['versions']
             for version in template_versions:
                 if version['active']:
@@ -61,14 +62,14 @@ class SendgridTemplate(models.Model):
                     continue
 
             vals = {
-                "remote_id": id,
+                "remote_id": template_id,
                 "name": template["name"],
                 "generation": template["generation"],
                 "html_content": template_vals["html_content"],
                 "plain_content": template_vals["plain_content"],
                 "version_name": template_vals["name"]
             }
-            record = self.search([('remote_id', '=', id)])
+            record = self.search([('remote_id', '=', template_id)])
             if record:
                 record.write(vals)
             else:
@@ -104,11 +105,15 @@ class SendgridTemplate(models.Model):
             suffix = params.search([
                 ('key', '=', 'mail_sendgrid.substitution_suffix')
             ]) or '}}'
-            # examples of working patterns: <prefix>keyword<suffix> or {{keyword}} or {{{working}}}
-            pattern = '(' + prefix + '(\w{1,50})' + suffix + ')|({{3}(\w{1,50})}{3})'
+            # examples of working patterns: <prefix>keyword<suffix> or
+            # {{keyword}} or {{{working}}}
+            pattern = '(' + prefix + r'(\w{1,50})' + suffix + \
+                      r')|({{3}(\w{1,50})}{3})'
             # return list(set(re.finditer(pattern, self.html_content)))
             w = set(
-                [x for x in [x.group(2) or x.group(4) for x in re.finditer(pattern, self.html_content)] if x != 'body']
+                [x for x in [x.group(2) or x.group(4) for x in
+                             re.finditer(pattern, self.html_content)] if
+                 x != 'body']
             )
 
             return w

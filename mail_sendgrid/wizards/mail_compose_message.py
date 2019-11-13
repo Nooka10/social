@@ -20,7 +20,7 @@ class EmailComposeMessage(models.TransientModel):
                 wizard.body, wizard.model, [res_id], post_process=True)[res_id]
             if sendgrid_template and wizard.body:
                 wizard.body_sendgrid = sendgrid_template.html_content.replace(
-                    '<%body%>', render_body)
+                    '{{body}}', render_body)
             else:
                 wizard.body_sendgrid = render_body
 
